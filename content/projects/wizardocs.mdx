@@ -1,0 +1,19 @@
+---
+title: "Wizardocs"
+excerpt: "RAG-powered Q&A SaaS for ML and LLM documentation — hybrid retrieval (BM25 + vector search, RRF fusion) with Cohere reranking, GPT-4o-mini answers, and inline citations."
+bannerLight: "../assets/betternews-light.png"
+bannerDark: "../assets/betternews-dark.png"
+date: 2026-01-01
+published: true
+url: "#"
+tech: ["FastAPI", "React", "ChromaDB", "Supabase", "Cohere", "GPT-4o-mini", "Docker", "Ragas"]
+featured: 8
+github: "https://github.com/abuqaiselegant/AskWizardocs"
+category: "fullstack"
+---
+
+RAG-powered Q&A SaaS for ML and LLM documentation — ask a question and get a grounded answer with every claim cited back to the exact source chunk it came from.
+
+Built a hybrid retrieval pipeline over 3,200+ deduplicated documentation chunks: BM25 and dense vector search run in parallel, fused with Reciprocal Rank Fusion, then a Cohere cross-encoder reranker selects the top 5 chunks. GPT-4o-mini generates answers strictly from those chunks, with inline citations that preview the source on hover. Answer quality is tracked via a Ragas evaluation pipeline (faithfulness + relevancy) with a CI gate that blocks deployment on regression.
+
+Shipped a full-stack SaaS with a FastAPI backend, vanilla React SPA, and Supabase-managed Postgres with Row Level Security for multi-tenant isolation. Implemented OAuth authentication (Google + GitHub via Supabase Auth), JWT middleware in FastAPI, and per-workspace ChromaDB collections with usage-based quota enforcement.
