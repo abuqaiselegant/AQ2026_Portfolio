@@ -55,6 +55,10 @@ const BANNER_OVERLAYS: Record<string, { light: string; dark: string }> = {
     light: "linear-gradient(135deg, rgba(14,165,233,0.22) 0%, transparent 50%)",
     dark: "linear-gradient(135deg, rgba(56,189,248,0.18) 0%, transparent 50%)",
   },
+  "wizardocs": {
+    light: "linear-gradient(135deg, rgba(201,154,58,0.22) 0%, transparent 50%)",
+    dark: "linear-gradient(135deg, rgba(212,168,67,0.18) 0%, transparent 50%)",
+  },
 };
 const DEFAULT_OVERLAY = { light: "transparent", dark: "transparent" };
 
