@@ -12,8 +12,109 @@ github: "https://github.com/abuqaiselegant/AskWizardocs"
 category: "fullstack"
 ---
 
-RAG-powered Q&A SaaS for ML and LLM documentation — ask a question and get a grounded answer with every claim cited back to the exact source chunk it came from.
+RAG-powered Q&A SaaS for ML and LLM documentation — ask a question and get a grounded
+answer with every claim cited back to the exact source chunk it came from. Hybrid
+retrieval over 3,200+ deduplicated chunks feeds a reranker and a constrained generation
+step, and answer quality is gated in CI so regressions never reach production.
 
-Built a hybrid retrieval pipeline over 3,200+ deduplicated documentation chunks: BM25 and dense vector search run in parallel, fused with Reciprocal Rank Fusion, then a Cohere cross-encoder reranker selects the top 5 chunks. GPT-4o-mini generates answers strictly from those chunks, with inline citations that preview the source on hover. Answer quality is tracked via a Ragas evaluation pipeline (faithfulness + relevancy) with a CI gate that blocks deployment on regression.
+## The problem
 
-Shipped a full-stack SaaS with a FastAPI backend, vanilla React SPA, and Supabase-managed Postgres with Row Level Security for multi-tenant isolation. Implemented OAuth authentication (Google + GitHub via Supabase Auth), JWT middleware in FastAPI, and per-workspace ChromaDB collections with usage-based quota enforcement.
+ML and LLM documentation is spread across dozens of sites, versioned unevenly, and
+written for readers who already know where to look. Asking a general-purpose chatbot
+about it produces fluent answers that are frequently wrong — and, worse, unfalsifiable,
+because nothing points back to a source you can check.
+
+The objective was a system that answers documentation questions **only** from retrieved
+source material, cites every claim back to the exact chunk it came from, and proves it
+has not regressed before each deploy.
+
+## Architecture
+
+<Mermaid
+  width="50%"
+  caption="Query path: parallel retrieval, rank fusion, reranking, then constrained generation."
+  chart={`flowchart TB
+  Q([User query]) --> BM25[BM25 keyword search]
+  Q --> VEC[Dense vector search]
+  BM25 --> RRF[Reciprocal Rank Fusion]
+  VEC --> RRF
+  RRF --> RR[Cohere cross-encoder reranker]
+  RR --> TOP[Top 5 chunks]
+  TOP --> GEN[GPT-4o-mini constrained generation]
+  GEN --> ANS([Answer with inline citations])
+`}
+/>
+
+The retrieval layer runs two searches **in parallel** rather than choosing between them,
+because they fail in opposite directions. BM25 matches exact tokens, so it reliably finds
+precise API names, flags, and error strings — but it misses paraphrases entirely. Dense
+vector search matches meaning, so it handles "how do I stop it retrying" against a page
+titled "configuring backoff" — but it drifts on rare literal identifiers.
+
+Reciprocal Rank Fusion merges the two ranked lists using **rank position rather than
+score**. This matters: BM25 scores and cosine similarities live on incompatible scales,
+so blending them numerically means hand-tuning a weight that only holds for one query
+distribution. RRF sidesteps that entirely — it needs no per-query calibration.
+
+Fusion optimises for recall, so the candidate set is deliberately wider than what the
+model should see. The **Cohere cross-encoder reranker** then does the precision pass.
+Unlike the bi-encoder used for vector search, a cross-encoder reads query and chunk
+together, which is far more accurate and far too slow to run over the whole corpus —
+exactly why it belongs here, over a shortlist, rather than at the retrieval stage.
+
+Only the surviving **top 5 chunks** reach GPT-4o-mini, which is instructed to answer
+strictly from them. Inline citations preview their source chunk on hover, so any claim
+is one hover away from verification.
+
+## Evaluation as a deploy gate
+
+<Mermaid
+  caption="Ragas scores every change; the CI gate blocks deploys on regression."
+  chart={`flowchart LR
+  PR[Pull request] --> EVAL[Ragas evaluation]
+  EVAL --> F[Faithfulness]
+  EVAL --> R[Answer relevancy]
+  F --> GATE{Regression?}
+  R --> GATE
+  GATE -- No --> SHIP[Deploy]
+  GATE -- Yes --> BLOCK[Block deploy]
+`}
+/>
+
+RAG systems degrade quietly. A prompt tweak or a chunking change can leave every answer
+looking plausible while grounding quality falls off, and no unit test catches it.
+
+So answer quality is measured, not assumed. A **Ragas** pipeline scores two properties on
+every change: **faithfulness** (is the answer actually supported by the retrieved chunks,
+or invented?) and **answer relevancy** (does it address the question asked?). A CI gate
+blocks deployment on regression, which turns "the answers feel worse" into a build
+failure with a number attached.
+
+## Multi-tenancy and platform
+
+<Mermaid
+  caption="Request path from SPA through JWT middleware to per-workspace isolation."
+  chart={`flowchart TB
+  SPA[React SPA] --> AUTH[Supabase Auth: Google + GitHub OAuth]
+  AUTH --> API[FastAPI JWT middleware]
+  API --> PG[(Postgres with Row Level Security)]
+  API --> CHROMA[(ChromaDB per-workspace collections)]
+  API --> QUOTA[Usage-based quota enforcement]
+`}
+/>
+
+Tenant isolation is enforced in two places, because the documents and the metadata live
+in different stores. **Postgres Row Level Security** scopes relational data at the
+database layer — isolation holds even if an API-layer filter is forgotten, which is the
+failure mode that leaks data between tenants. Vector data is isolated structurally
+instead, with **per-workspace ChromaDB collections**, so one workspace's embeddings are
+not merely filtered out of another's search, they are not in the same index at all.
+
+Authentication is Google and GitHub OAuth via Supabase Auth, with JWT middleware
+validating on every FastAPI request, and usage-based quotas enforced per workspace.
+
+## Results
+
+- **3,200+** deduplicated documentation chunks indexed
+- **Top 5** chunks admitted to the generation step after reranking
+- Faithfulness and answer relevancy tracked per change, enforced by a CI gate

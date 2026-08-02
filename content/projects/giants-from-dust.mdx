@@ -11,8 +11,71 @@ featured: 4
 github: "https://github.com/abuqaiselegant/giants-from-dust"
 category: "backend"
 ---
-Open-source repository for building modern AI architectures from scratch — no black-box abstractions, just clean implementations with visible internals.
 
-Covers the full stack from fundamentals to production-grade models: NumPy-only neural networks with manual backprop, attention built from tokenisation through positional encoding, a Tiny Shakespeare GPT, and a modern LLM with RMSNorm, SwiGLU, RoPE, and Grouped Query Attention. Ends with an agentic workflow using the OpenRouter API.
+An open-source repository for building modern AI architectures from scratch — no
+black-box abstractions, just clean implementations with visible internals. It runs from
+NumPy-only neural networks with hand-written backprop all the way to a modern LLM with
+RMSNorm, SwiGLU, RoPE, and Grouped Query Attention, ending with an agentic workflow.
 
-Includes an interactive React/JSX guide walking through BPE tokenisation, embeddings, attention, and GPT architecture step by step.
+## The problem
+
+Calling `model.fit()` teaches you an API, not an architecture. Modern frameworks are
+excellent at hiding exactly the machinery worth understanding — what a gradient actually
+is, how attention computes its weights, why a positional encoding is needed at all.
+
+The objective was a path where every layer is visible and implemented rather than
+imported, and where each stage earns the next: you write backprop by hand before using
+autograd, and you build attention before assembling a transformer around it.
+
+## The progression
+
+<Mermaid
+  width="50%"
+  caption="Each stage builds on the one before, from manual gradients to an agentic workflow."
+  chart={`flowchart TB
+  A[NumPy neural networks with manual backprop] --> B[Tokenisation]
+  B --> C[Embeddings and positional encoding]
+  C --> D[Attention from scratch]
+  D --> E[Tiny Shakespeare GPT]
+  E --> F[Modern LLM: RMSNorm, SwiGLU, RoPE, GQA]
+  F --> G([Agentic workflow via OpenRouter API])
+`}
+/>
+
+The sequence is the pedagogy. **NumPy-only networks with manual backprop** come first
+because writing the backward pass by hand is what makes autograd legible later — you
+cannot really understand what a framework is doing for you until you have done it
+yourself once.
+
+**Attention** is built up from its parts rather than presented whole: tokenisation, then
+embeddings, then positional encoding. That ordering matters, because positional encoding
+only makes sense once you have seen that attention is permutation-invariant and therefore
+has no inherent notion of order.
+
+The **Tiny Shakespeare GPT** is the first point where the pieces become a working
+language model — small enough to train and inspect, complete enough to be the real thing.
+
+The **modern LLM** stage then replaces each classical component with its current
+counterpart, which is where the contemporary architecture becomes concrete: **RMSNorm**
+in place of LayerNorm, **SwiGLU** as the feed-forward activation, **RoPE** for rotary
+positional encoding, and **Grouped Query Attention** for a memory-efficient attention
+variant. Having implemented the classical version first, each substitution reads as a
+specific answer to a specific limitation rather than as trivia.
+
+It closes with an **agentic workflow using the OpenRouter API** — the step from "I built a
+model" to "I built something that uses one".
+
+## Interactive guide
+
+An accompanying **React/JSX guide** walks through BPE tokenisation, embeddings, attention,
+and GPT architecture step by step, so the concepts can be explored visually alongside the
+implementations.
+
+## Contents
+
+- NumPy-only neural networks with manual backpropagation
+- Attention built from tokenisation through positional encoding
+- A Tiny Shakespeare GPT
+- A modern LLM with RMSNorm, SwiGLU, RoPE, and Grouped Query Attention
+- An agentic workflow using the OpenRouter API
+- An interactive React/JSX guide to BPE, embeddings, attention, and GPT architecture

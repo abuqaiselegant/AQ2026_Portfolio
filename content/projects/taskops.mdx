@@ -11,8 +11,54 @@ featured: 7
 github: "#"
 category: "backend"
 ---
-Task management backend built with Flask, PostgreSQL, Redis, and Docker. Containerised services maintain consistent behaviour across development and production environments.
 
-A lightweight Node.js utility service handles background jobs — input validation, log parsing, and admin operations — keeping the Flask layer focused on the core API.
+A task management backend built on Flask, PostgreSQL, Redis, and Docker, with a separate
+Node.js utility service absorbing background work so the API layer stays focused on
+serving requests.
 
-Implemented JWT-based auth, request validation, and structured error handling. Automated background jobs reduced manual debugging cycles by ~25%.
+## The problem
+
+Backends accumulate work that does not belong on the request path. Input validation
+sweeps, log parsing, and admin operations all need to happen, but running them inline
+makes API responses slow and unpredictable — and folding them into the same codebase
+gradually turns a clean API into a job runner with an HTTP interface bolted on.
+
+The objective was to keep that boundary explicit from the start.
+
+## Architecture
+
+<Mermaid
+  width="50%"
+  caption="Flask serves the API; background jobs run out-of-band in a separate service."
+  chart={`flowchart TB
+  C([Client]) --> JWT[JWT auth and request validation]
+  JWT --> API[Flask API]
+  API --> PG[(PostgreSQL)]
+  API --> RD[(Redis)]
+  RD --> NODE[Node.js utility service]
+  NODE --> JOBS([Validation, log parsing, admin ops])
+`}
+/>
+
+The **Flask API** owns request handling and persistence, and nothing else. The **Node.js
+utility service** takes background jobs — input validation, log parsing, admin operations
+— out of the request path entirely. Splitting by responsibility rather than by convenience
+means the API's latency is unaffected by how heavy the background work gets, and either
+side can be scaled or restarted without touching the other.
+
+**PostgreSQL** holds durable relational state; **Redis** provides the fast in-memory layer
+between the two services. Every service runs in **Docker**, so behaviour is consistent
+between development and production — which matters most for exactly this kind of
+multi-service setup, where "works on my machine" usually means "my local services were
+wired differently".
+
+Security and correctness live at the edge: **JWT-based authentication**, **request
+validation**, and **structured error handling**, so bad input is rejected before it
+reaches business logic and failures surface in a parseable form rather than as stack
+traces.
+
+## Results
+
+- Background jobs moved out of the request path, reducing manual debugging cycles by **~25%**
+- Fully containerised services with consistent development and production behaviour
+- JWT auth, request validation, and structured error handling across the API

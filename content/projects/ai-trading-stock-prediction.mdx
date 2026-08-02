@@ -11,6 +11,58 @@ featured: 0
 github: "https://github.com/abuqaiselegant/AI-Trading"
 category: "backend"
 ---
-Stock market prediction model using LASSO Regression applied to NSE NIFTY50 data. Technical indicators — Moving Averages, RSI, and Super Trend — combined with time-lag features capture sequential price patterns, while LASSO handles both feature selection and regularisation on a limited initial dataset.
 
-Achieved a Test RMSE of 14.78 and MAPE of 2.98% on held-out NIFTY50 data. Methodology peer-reviewed and published in IEEE.
+A stock market prediction model for NSE NIFTY50 built on LASSO Regression, combining
+technical indicators with time-lag features. Test RMSE of 14.78 and MAPE of 2.98% on
+held-out data, with the methodology peer-reviewed and published in IEEE.
+
+## The problem
+
+Price prediction on a limited dataset invites overfitting. Technical analysis offers
+dozens of candidate indicators, and it is easy to engineer more features than you have
+meaningful observations to support — at which point the model memorises noise and
+evaluates beautifully in-sample while failing on anything held out.
+
+The objective was a model that stays honest on a limited initial dataset: enough features
+to capture real sequential structure, with something forcing the useless ones out.
+
+## Approach
+
+<Mermaid
+  width="50%"
+  caption="Indicators and lagged values form the feature set; LASSO selects and regularises."
+  chart={`flowchart TB
+  D[(NSE NIFTY50 data)] --> MA[Moving Averages]
+  D --> RSI[RSI]
+  D --> ST[Super Trend]
+  D --> LAG[Time-lag features]
+  MA --> F[Feature set]
+  RSI --> F
+  ST --> F
+  LAG --> F
+  F --> L[LASSO regression]
+  L --> SEL[Feature selection + regularisation]
+  SEL --> P([Price prediction])
+`}
+/>
+
+The three indicators capture different things, which is why all three are present.
+**Moving averages** smooth short-term noise to expose trend. **RSI** measures momentum,
+flagging when recent movement is stretched relative to its own history. **Super Trend**
+tracks trend direction with volatility taken into account. **Time-lag features** carry
+prior values forward, which is what lets a regression model see sequence at all — without
+them, each observation would be treated as independent, discarding the ordering that
+matters most in price data.
+
+**LASSO** is the deliberate choice, and it does two jobs at once. Its L1 penalty shrinks
+coefficients toward zero and drives the genuinely uninformative ones *to* zero, so it
+performs feature selection as part of fitting rather than as a separate step. On a
+limited dataset with many correlated technical indicators, that is exactly the right
+property — it keeps the model from spending its capacity on redundant features, and the
+surviving non-zero coefficients say which indicators actually carried signal.
+
+## Results
+
+- **Test RMSE 14.78** on held-out NIFTY50 data
+- **MAPE 2.98%**
+- Methodology peer-reviewed and **published in IEEE**

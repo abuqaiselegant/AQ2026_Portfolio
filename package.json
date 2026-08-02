@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "velite && next dev",
+    "dev": "velite && (trap 'kill 0' EXIT; velite dev & next dev)",
     "dev:velite": "velite dev",
     "build": "velite && next build",
     "start": "next start",
@@ -31,6 +31,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.503.0",
+    "mermaid": "^11.16.0",
     "motion": "^12.23.25",
     "next": "16.0.7",
     "next-themes": "^0.4.6",

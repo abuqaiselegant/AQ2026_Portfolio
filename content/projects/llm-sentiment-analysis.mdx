@@ -11,8 +11,76 @@ featured: 1
 github: "https://github.com/abuqaiselegant"
 category: "backend"
 ---
-Built a modular sentiment-analysis pipeline integrating multiple LLMs and benchmarked 8+ model variants across accuracy, consistency, reasoning quality, and inference cost.
 
-Designed structured evaluation prompts and scoring criteria to quantify sentiment drift and calibration differences between LLM models, enabling informed model selection for real-time and batch workflows. Combined LLM-derived sentiment with market indicators to generate trading signals, achieving a Sharpe ratio of 1.34 over 1.2K+ backtest days.
+A modular sentiment-analysis pipeline that treats model choice as a runtime decision
+rather than a fixed one. 8+ model variants were benchmarked across accuracy, consistency,
+reasoning quality, and inference cost, and the resulting sentiment was combined with
+market indicators to generate trading signals — a Sharpe ratio of 1.34 over 1.2K+
+backtest days.
 
-Deployed as a Flask API with configurable model-selection modes (high-accuracy / low-latency / cost-efficient).
+## The problem
+
+"Which LLM should we use?" has no single answer, because the honest answer depends on
+what you are optimising. A model that is most accurate is often the slowest and dearest;
+the cheapest is frequently the least consistent. Picking one and hardcoding it means
+every workload inherits that one compromise.
+
+Worse, LLM sentiment scores are not stable in the way a classifier's are. The same text
+can score differently across models, and calibration differs enough that scores are not
+directly comparable between them. That has to be measured, not assumed.
+
+## Architecture
+
+<Mermaid
+  width="50%"
+  caption="Text is scored under a selected model mode, then fused with market indicators."
+  chart={`flowchart TB
+  IN([Input text]) --> MODE{Selection mode}
+  MODE -->|High accuracy| M1[Highest-scoring model]
+  MODE -->|Low latency| M2[Fastest model]
+  MODE -->|Cost efficient| M3[Cheapest model]
+  M1 --> SENT[Sentiment score]
+  M2 --> SENT
+  M3 --> SENT
+  SENT --> FUSE[Combine with market indicators]
+  FUSE --> SIG([Trading signal])
+`}
+/>
+
+The pipeline is **modular** so the model is swappable behind a stable interface, which is
+what makes the three **selection modes** possible — high-accuracy, low-latency, and
+cost-efficient. Real workloads differ: an interactive request and an overnight batch job
+want opposite trade-offs, and this lets one deployment serve both rather than forcing a
+single global compromise.
+
+Choosing between modes honestly requires evidence, which is what the benchmark provides.
+
+## Benchmarking
+
+<Mermaid
+  caption="Each model variant is scored on four axes under identical prompts."
+  chart={`flowchart LR
+  P[Structured evaluation prompts] --> B[8+ model variants]
+  B --> A1[Accuracy]
+  B --> A2[Consistency]
+  B --> A3[Reasoning quality]
+  B --> A4[Inference cost]
+`}
+/>
+
+**Structured evaluation prompts and scoring criteria** hold the input constant so
+differences are attributable to the model rather than to prompt variance. Scoring on four
+axes — accuracy, consistency, reasoning quality, and inference cost — is what makes the
+trade-off explicit instead of anecdotal.
+
+Two properties matter most and are easy to miss. **Sentiment drift** is a model's tendency
+to lean systematically positive or negative relative to its peers. **Calibration**
+differences mean a "0.8" from one model is not a "0.8" from another. Quantifying both is
+what makes cross-model comparison meaningful — and what makes swapping models at runtime
+safe rather than reckless.
+
+## Results
+
+- **8+** model variants benchmarked on four axes
+- **Sharpe ratio 1.34** over **1.2K+** backtest days, combining LLM sentiment with market indicators
+- Deployed as a Flask API with high-accuracy / low-latency / cost-efficient modes

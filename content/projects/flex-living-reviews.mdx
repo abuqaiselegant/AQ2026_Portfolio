@@ -11,8 +11,60 @@ featured: 6
 github: "https://github.com/abuqaiselegant/flex-living-reviews"
 category: "fullstack"
 ---
-Review management system for vacation rental properties, with a public-facing display and a manager approval dashboard.
 
-The public interface lets guests browse properties with aggregated ratings and per-category review breakdowns on a mobile-optimised layout. The manager dashboard handles approve/reject/pending workflows, tracks real-time approval stats, and surfaces property-level performance metrics.
+A review management system for vacation rental properties, split into two surfaces: a
+public-facing display where guests browse properties with aggregated ratings, and a
+manager dashboard that gates which reviews appear there.
 
-Built with Next.js 14, TypeScript, and Tailwind CSS, backed by PostgreSQL on AWS RDS. Deployed on Vercel with GitHub Actions CI/CD.
+## The problem
+
+Review systems have two audiences with opposing needs. Guests want everything visible and
+trustworthy — filtered reviews are worthless to them. Managers need a moderation step,
+because unmoderated public text is a liability, and they need to see how properties are
+performing across the portfolio.
+
+Serving both from one interface compromises each. The design splits them instead, with an
+explicit approval state as the boundary between the two.
+
+## Architecture
+
+<Mermaid
+  width="50%"
+  caption="Approval state is the boundary: only approved reviews reach the public surface."
+  chart={`flowchart TB
+  R[(Reviews in PostgreSQL on AWS RDS)] --> Q{Approval state}
+  Q -->|Pending| DASH[Manager dashboard]
+  DASH -->|Approve| APP[Approved]
+  DASH -->|Reject| REJ[Rejected]
+  APP --> PUB[Public property pages]
+  PUB --> AGG([Aggregated ratings and per-category breakdown])
+  DASH --> STATS([Real-time approval stats and property metrics])
+`}
+/>
+
+**Approval state is the single source of truth** for visibility. Rather than maintaining
+separate published and unpublished tables that can drift apart, one review row carries a
+state, and the public query filters on it. Approve and reject become state transitions,
+which keeps the two surfaces consistent by construction — a review cannot be
+simultaneously live and pending.
+
+The **public interface** presents aggregated ratings alongside **per-category breakdowns**,
+because a single composite score hides the thing guests actually want to know. A property
+rated well overall but poorly on cleanliness is a materially different proposition from
+one with the same average spread evenly. The layout is mobile-optimised, which reflects
+how guests browse rentals in practice.
+
+The **manager dashboard** owns the approve/reject/pending workflow and surfaces real-time
+approval stats plus property-level performance metrics — turning moderation from a chore
+into the point where portfolio problems become visible.
+
+## Stack and deployment
+
+**Next.js 14 with TypeScript and Tailwind CSS**, backed by **PostgreSQL on AWS RDS**.
+Deployed on **Vercel with GitHub Actions CI/CD**.
+
+## Results
+
+- Two purpose-built surfaces sharing one approval-state model
+- Aggregated ratings with per-category breakdowns on a mobile-optimised layout
+- Real-time approval stats and property-level performance metrics for managers

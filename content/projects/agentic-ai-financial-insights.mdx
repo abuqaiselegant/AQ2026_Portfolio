@@ -11,8 +11,65 @@ featured: 2
 github: "https://github.com/abuqaiselegant/ai-agent"
 category: "fullstack"
 ---
-Designed an agentic AI system using LangGraph to orchestrate multi-step reasoning, retrieval workflows, and memory-augmented behaviour.
 
-Integrated a VectorDB-driven RAG layer with session-aware FastAPI endpoints, enabling personalised outputs for 50+ users. Deployed on AWS EC2 with Docker and CI/CD, achieving ~1.4s median latency under concurrent load.
+An agentic AI system for financial insights, built on LangGraph to orchestrate multi-step
+reasoning, retrieval workflows, and memory-augmented behaviour. A VectorDB-driven RAG
+layer sits behind session-aware FastAPI endpoints, serving personalised output to 50+
+users at roughly 1.4s median latency under concurrent load.
 
-Implemented secure authentication, request tracing, and structured logging for reliable, production-ready operation.
+## The problem
+
+Financial questions rarely resolve in a single retrieval. Answering one usually means
+several dependent steps — pull the relevant context, interpret it, then follow up on what
+that reveals. A single-shot RAG call cannot express that; it retrieves once and answers
+once, with no way to act on what it just learned.
+
+The objective was a system that can plan and execute multi-step reasoning, carry context
+across turns within a user's session, and still respond fast enough to feel interactive.
+
+## Architecture
+
+<Mermaid
+  width="50%"
+  caption="LangGraph orchestrates reasoning and retrieval; state persists per session."
+  chart={`flowchart TB
+  U([User request]) --> API[FastAPI session-aware endpoint]
+  API --> G[LangGraph orchestrator]
+  G --> PLAN[Multi-step reasoning]
+  PLAN --> RET[Retrieval workflow]
+  RET --> VDB[(VectorDB)]
+  VDB --> PLAN
+  PLAN --> MEM[Memory-augmented state]
+  MEM --> G
+  G --> OUT([Personalised response])
+`}
+/>
+
+**LangGraph** is the orchestration layer rather than a plain chain, because the control
+flow here is genuinely cyclic. A reasoning step decides whether it has enough context; if
+not, it issues another retrieval and re-enters the reasoning step with the result. That
+loop is the whole point — expressing it as a graph makes each step's state explicit and
+inspectable, which a linear chain cannot do.
+
+The **VectorDB-driven RAG layer** supplies the grounding at each retrieval step, so the
+agent works from source material rather than parametric memory. **Memory-augmented state**
+is what makes the output personalised: context accumulated earlier in a session is
+available to later steps instead of being discarded between turns.
+
+Endpoints are **session-aware** by design, since per-user state is the unit of isolation.
+That is also what allows one deployment to serve many users without their context
+bleeding together.
+
+## Operations
+
+Deployed on **AWS EC2 with Docker and CI/CD**. Agentic systems are unusually hard to debug
+after the fact — a bad answer might come from the planner, the retrieval step, or the
+generation step, and the final output alone rarely tells you which. **Request tracing** and
+**structured logging** exist to make that attributable per request, and authentication
+guards the endpoints.
+
+## Results
+
+- **50+** users served with personalised output
+- **~1.4s** median latency under concurrent load
+- Docker and CI/CD on AWS EC2, with request tracing and structured logging

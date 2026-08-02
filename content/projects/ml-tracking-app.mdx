@@ -11,8 +11,63 @@ featured: 5
 github: "https://github.com/abuqaiselegant/MlTrackingAPP"
 category: "fullstack"
 ---
-Lightweight ML experiment tracking platform for engineers who want structured logging without the overhead of MLflow.
 
-Experiments are logged via a 4-line Python snippet or REST API with no extra dependencies. The dashboard visualises metrics and training curves in real time and supports model upload and download for artefact management.
+A lightweight experiment tracking platform for engineers who want structured logging
+without MLflow's overhead. Experiments are logged with a 4-line Python snippet or a plain
+REST call, with no extra dependencies, and the dashboard renders metrics and training
+curves in real time.
 
-FastAPI and PostgreSQL backend, Next.js 16 with TypeScript and shadcn/ui frontend, deployed on Vercel and Render.
+## The problem
+
+Experiment tracking has an adoption problem, not a capability problem. Full-featured
+platforms are powerful but demand a server, a client library, and a mental model before
+they log a single number. Faced with that on a small project, most people fall back to
+printing to stdout and pasting numbers into a spreadsheet — and then lose the comparison
+entirely.
+
+The objective was to make the tracked path cheaper than the untracked one. If logging an
+experiment properly takes four lines and no install, there is no reason to skip it.
+
+## Architecture
+
+<Mermaid
+  width="50%"
+  caption="Training code logs over plain HTTP; the dashboard reads the same API."
+  chart={`flowchart TB
+  T[Training script] -->|4-line snippet or REST| API[FastAPI]
+  API --> PG[(PostgreSQL)]
+  API --> ART[Model artefact upload and download]
+  PG --> DASH[Next.js dashboard]
+  DASH --> VIZ([Metrics and training curves])
+`}
+/>
+
+The design decision that carries everything else is **no client dependency**. Logging is a
+plain REST call, so the 4-line snippet is really just an HTTP request — nothing to
+install, nothing to keep in step with the server, and nothing that can conflict with the
+pinned dependencies of the training environment. It works from any language that can make
+an HTTP request, not only from Python.
+
+**FastAPI and PostgreSQL** hold the backend. Runs and metrics are relational by nature —
+experiments have many runs, runs have many metric points — so a relational store fits
+without contortion, and querying across runs to compare them is a plain SQL join.
+
+The **Next.js dashboard with TypeScript and shadcn/ui** reads through the same API the
+training code writes to. Real-time metric and training-curve rendering is what makes the
+tool useful *during* a run rather than only after it, which is when you actually want to
+kill a diverging job.
+
+**Model upload and download** closes the loop on artefact management, so the weights that
+produced a given set of metrics stay attached to that run instead of drifting into an
+untracked folder.
+
+## Deployment
+
+Frontend on **Vercel**, backend on **Render**, with Docker for consistent local and
+production behaviour.
+
+## Results
+
+- **4-line** Python snippet to log an experiment, with no client library to install
+- Real-time metrics and training curves, plus model artefact upload and download
+- FastAPI + PostgreSQL backend, Next.js 16 + TypeScript + shadcn/ui frontend

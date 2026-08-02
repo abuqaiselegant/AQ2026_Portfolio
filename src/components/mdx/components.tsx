@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Files, File, Folder } from "@/components/ui/files";
 import { ComponentSource } from "@/components/mdx/component-source";
 import { ZoomableMedia } from "./zoomable-media";
+import { Mermaid } from "./mermaid";
 
 import Link from "next/link";
 import { CodeBlockWrapper } from "./code-block-wrapper";
@@ -261,6 +262,7 @@ export const mdxComponents = {
     />
   ),
   ZoomableMedia,
+  Mermaid,
   ComponentSource,
   CodeBlockWrapper: ({ ...props }) => (
     <CodeBlockWrapper className="rounded-md border" {...props} />

@@ -11,8 +11,65 @@ featured: 3
 github: "https://github.com/abuqaiselegant/BigData"
 category: "backend"
 ---
-Built a distributed Spark pipeline using SMOTE variants and structured resampling to improve minority-class recall on 100K+ highly skewed records.
 
-Optimised preprocessing and synthetic sample generation with partition tuning, caching, and broadcast joins, reducing training time by ~30% on 100K+ records. Designed a reproducible experiment framework with MLflow, comparing imbalance-mitigation techniques across 25+ tracked runs.
+A distributed Spark pipeline for improving minority-class recall on 100K+ highly skewed
+records, using SMOTE variants and structured resampling. Partition tuning, caching, and
+broadcast joins cut training time by roughly 30%, and 25+ MLflow-tracked runs compare
+imbalance-mitigation techniques against each other.
 
-Deployed the model as a Dockerised service on Cloud Run, achieving ~1.2s inference latency under concurrent load.
+## The problem
+
+On a heavily skewed dataset, accuracy is a misleading metric. A model that predicts the
+majority class every single time scores well and is completely useless — it never
+identifies the rare cases, which are usually the ones that matter.
+
+The genuine objective is **minority-class recall**. Getting there means rebalancing the
+training distribution, and at 100K+ records that becomes an engineering problem as much as
+a modelling one: synthetic sample generation is expensive, and doing it naively on a
+distributed cluster is slow enough to make iteration impractical.
+
+## Architecture
+
+<Mermaid
+  width="50%"
+  caption="Distributed resampling and training, with every run tracked in MLflow."
+  chart={`flowchart TB
+  D[(100K+ skewed records)] --> PRE[PySpark preprocessing]
+  PRE --> RES[SMOTE variants and structured resampling]
+  RES --> TRAIN[Model training]
+  TRAIN --> ML[(MLflow: 25+ tracked runs)]
+  TRAIN --> DOCK[Dockerised service]
+  DOCK --> CR[GCP Cloud Run]
+`}
+/>
+
+**SMOTE** rebalances by synthesising new minority-class examples rather than discarding
+majority ones, which matters because simple undersampling throws away real signal. Several
+**variants** are compared instead of assuming one is best — which variant wins depends on
+how the minority class is distributed, and that is an empirical question, not a
+theoretical one.
+
+The distributed execution is where most of the engineering went. **Partition tuning**
+controls how work is split across the cluster, since poor partitioning leaves executors
+idle while one straggler finishes. **Caching** keeps reused intermediate datasets in
+memory rather than recomputing them on every action — Spark's lazy evaluation will
+otherwise redo the same work repeatedly. **Broadcast joins** ship the smaller side of a
+join to every executor, avoiding a full shuffle, which is typically the most expensive
+operation in a Spark job. Together these cut training time ~30%.
+
+## Reproducibility
+
+Comparing imbalance techniques is only meaningful if the comparison is controlled. An
+**MLflow** experiment framework tracks 25+ runs with their parameters and metrics, so
+"which resampling strategy actually worked" is answered from recorded evidence rather than
+memory. This is what turns a series of ad-hoc experiments into a result you can defend.
+
+The trained model is packaged as a **Dockerised service on Cloud Run**, serving at ~1.2s
+inference latency under concurrent load.
+
+## Results
+
+- **100K+** highly skewed records processed
+- **~30%** reduction in training time from partition tuning, caching, and broadcast joins
+- **25+** MLflow-tracked runs comparing imbalance-mitigation techniques
+- **~1.2s** inference latency on Cloud Run under concurrent load
