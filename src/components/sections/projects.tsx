@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { projects } from "#site/content";
-import { FeaturedProjectCard } from "./featured-project-card";
+import { ProjectRow } from "./project-row";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
@@ -80,7 +80,7 @@ export function Projects() {
         <MotionConfig transition={{ duration: 0.3, type: "spring", bounce: 0 }}>
           <AnimatePresence mode="popLayout">
             {sortedProjects.map((project) => (
-              <FeaturedProjectCard key={project.slugAsParams} {...project} />
+              <ProjectRow key={project.slugAsParams} {...project} />
             ))}
           </AnimatePresence>
         </MotionConfig>

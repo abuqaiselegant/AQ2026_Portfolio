@@ -6,28 +6,16 @@ This doc lists everything the project depends on and what you need to configure.
 
 ## 1. Environment variables
 
-All env vars go in **`.env.local`** (create it from `.env.example`). Never commit `.env.local`.
-
-| Variable | Required? | Purpose |
-|----------|-----------|---------|
-| **`GEMINI_API_KEY`** | **Yes** (for AI chat) | Google Gemini API key. Without it, the "Ask Gemini" chat on project cards will fail. Get it from [Google AI Studio](https://aistudio.google.com/apikey). |
-| **`UPSTASH_REDIS_REST_URL`** | No | Upstash Redis REST URL. Used for: (1) rate limiting the Gemini API, (2) caching GitHub READMEs. If omitted, chat works but with no rate limit and no README cache. |
-| **`UPSTASH_REDIS_REST_TOKEN`** | No | Upstash Redis REST token. Only used when `UPSTASH_REDIS_REST_URL` is also set. |
-
-**Minimum to run locally with AI chat:**  
-Only `GEMINI_API_KEY` is required.
-
-**Optional:** Set both Upstash vars if you want rate limiting and README caching (see [Upstash setup](#2-optional-upstash-redis)).
+**None.** The project runs with no `.env` file and no secrets.
 
 ---
 
-## 2. Optional: Upstash Redis
+## 2. Project pages
 
-- Sign up at [upstash.com](https://upstash.com) → create a Redis database.
-- Copy **UPSTASH_REDIS_REST_URL** and **UPSTASH_REDIS_REST_TOKEN** from the database dashboard.
-- Add them to `.env.local`. Restart the dev server.
-
-No Redis = app still works; you just won’t have rate limiting or README caching.
+Each project in `content/projects/*.mdx` gets its own page at **`/projects/<slug>`**,
+generated statically at build time. Clicking a project anywhere on the site opens that
+page, which shows the banner, title, excerpt, tech tags, GitHub/live links, and the full
+MDX body.
 
 ---
 
@@ -69,8 +57,8 @@ Update these for your own brand and links. No env vars needed; edit the file.
 
 ## 7. Deployment (e.g. Google Cloud Run)
 
-- **Deploy script:** `bun run deploy` runs `gcloud run deploy` and forwards env vars from `.env.local`. You need the **gcloud CLI** installed and logged in.
-- Set the same env vars in your Cloud Run service (e.g. via console or `--set-env-vars`) so production has `GEMINI_API_KEY` and, if you use it, Upstash Redis.
+- **Deploy script:** `bun run deploy` runs `gcloud run deploy --source .`, which builds the Dockerfile on Cloud Build. You need the **gcloud CLI** installed and logged in.
+- No env vars are needed in the Cloud Run service.
 
 ---
 
@@ -84,9 +72,6 @@ Update these for your own brand and links. No env vars needed; edit the file.
 
 ## Quick checklist
 
-- [ ] Copy `.env.example` to `.env.local`
-- [ ] Set `GEMINI_API_KEY` in `.env.local`
-- [ ] (Optional) Set Upstash Redis URL and token in `.env.local`
 - [ ] Ensure `public/abuqais.pdf` exists for the resume link
 - [ ] Update `src/config/site.config.ts` (name, origin, email, socials)
 - [ ] If not abuqais: change GitHub username in `src/components/github-contributions.tsx`

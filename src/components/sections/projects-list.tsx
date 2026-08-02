@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { FeaturedProjectCard } from "./featured-project-card";
+import { ProjectRow } from "./project-row";
 import { SearchFilterGroup, type SortOption } from "@/components/ui/filter-group";
 import type { Projects } from "#site/content";
 
@@ -128,7 +128,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
               </p>
               <div className="flex flex-col gap-1">
                 {projectsByYear[year].map((p) => (
-                  <FeaturedProjectCard key={p.slugAsParams} {...p} />
+                  <ProjectRow key={p.slugAsParams} {...p} />
                 ))}
               </div>
             </div>
@@ -136,7 +136,7 @@ export function ProjectsList({ projects }: ProjectsListProps) {
         ) : (
           <div className="flex flex-col gap-1">
             {filteredAndSortedProjects.map((p) => (
-              <FeaturedProjectCard key={p.slugAsParams} {...p} />
+              <ProjectRow key={p.slugAsParams} {...p} />
             ))}
           </div>
         )}

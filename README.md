@@ -1,6 +1,6 @@
 # Portfolio
 
-Personal portfolio built with Next.js, featuring a blog, project showcase, and AI chat.
+Personal portfolio built with Next.js, featuring a blog and project showcase.
 
 ## Run locally
 
@@ -9,16 +9,7 @@ Personal portfolio built with Next.js, featuring a blog, project showcase, and A
    bun install
    ```
 
-2. **Set up environment** (optional, for AI chat)
-   
-   Create `.env.local`:
-   ```bash
-   GEMINI_API_KEY=your_key
-   UPSTASH_REDIS_REST_URL=your_url
-   UPSTASH_REDIS_REST_TOKEN=your_token
-   ```
-
-3. **Start dev server**
+2. **Start dev server**
    ```bash
    bun run dev
    ```
@@ -30,7 +21,6 @@ Personal portfolio built with Next.js, featuring a blog, project showcase, and A
 - Next.js 16, React 19, Bun
 - Tailwind CSS, Radix UI, Framer Motion
 - Velite (MDX content)
-- Google Gemini API
 
 ## Scripts
 
