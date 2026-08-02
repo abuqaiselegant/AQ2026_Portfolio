@@ -6,7 +6,7 @@ interface BlogHeaderProps {
   tags?: string[];
 }
 
-export function BlogHeader({ title, date, author, category, tags }: BlogHeaderProps) {
+export function BlogHeader({ title, date }: BlogHeaderProps) {
   const formattedDate = new Date(date).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",

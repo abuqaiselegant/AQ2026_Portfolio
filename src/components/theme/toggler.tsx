@@ -4,7 +4,7 @@ import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 
 type ThemeTogglerProps = {
   className?: string;
@@ -18,11 +18,7 @@ const themes = [
 
 export default function ThemeToggler({ className }: ThemeTogglerProps) {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   return (
     <div

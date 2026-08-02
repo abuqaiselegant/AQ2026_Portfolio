@@ -19,8 +19,8 @@ export function StardustClock() {
       const rect = ref.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-      let dx = mx - cx;
-      let dy = my - cy;
+      const dx = mx - cx;
+      const dy = my - cy;
       const dist = Math.hypot(dx, dy) || 1;
       const scale = Math.min(PUPIL_MAX / dist, 1);
       return { x: dx * scale, y: dy * scale };

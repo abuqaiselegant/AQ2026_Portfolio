@@ -2,7 +2,6 @@
 
 import type { Projects } from "#site/content";
 import { MDXContentRenderer } from "@/components/mdx/mdx-content-renderer";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { ArrowUp, ArrowUpRight, Github, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -443,22 +442,15 @@ interface ChatProviderProps {
 }
 
 function ChatProvider({ projectContext, children }: ChatProviderProps) {
-  const { actions: cardActions, state: cardState } = useProjectCard();
+  const { actions: cardActions } = useProjectCard();
 
   const chat = useChatHook({
     onFirstMessage: cardActions.enterChatMode,
     projectContext,
   });
 
-  const resetRef = useRef(chat.reset);
-  resetRef.current = chat.reset;
-
-  // Removed reset on close logic to persist chat history
-  //   useEffect(() => {
-  //     if (!cardState.isActive) {
-  //       resetRef.current();
-  //     }
-  //   }, [cardState.isActive]);
+  // Chat history intentionally persists when the card closes, so there is no
+  // reset-on-close effect here.
 
   return (
     <ChatContext

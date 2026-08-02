@@ -26,9 +26,8 @@ export const CopyButton = ({ children, className }: { children: React.ReactNode,
       return node.map(extractSourceCode).join("");
     }
     if (React.isValidElement(node)) {
-      const { props } = node;
-      // @ts-ignore
-      const children = React.Children.map(props.children, extractSourceCode)?.join("");
+      const { children: nested } = node.props as { children?: React.ReactNode };
+      const children = React.Children.map(nested, extractSourceCode)?.join("");
       return `${children}`;
     }
     return "";

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 
 const STORAGE_KEY = "portfolio-margin";
 
@@ -15,39 +16,39 @@ const DEFAULTS: Record<SectionKey, string> = {
   random: "A thought, a line, a fragment.",
 };
 
+function readStoredData(): Record<SectionKey, string> {
+  if (typeof window === "undefined") return DEFAULTS;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Record<SectionKey, string>>;
+      return { ...DEFAULTS, ...parsed };
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULTS;
+}
+
 type Props = {
   sectionKeys: readonly SectionKey[];
   sectionLabels: Record<SectionKey, string>;
 };
 
 export function StardustContent({ sectionKeys, sectionLabels }: Props) {
-  const [data, setData] = useState<Record<SectionKey, string>>(DEFAULTS);
+  const [data, setData] = useState<Record<SectionKey, string>>(readStoredData);
   const [active, setActive] = useState<SectionKey>(sectionKeys[0]);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [shake, setShake] = useState(false);
   const [key, setKey] = useState(0);
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<Record<SectionKey, string>>;
-        setData((prev) => ({ ...prev, ...parsed }));
-      }
-    } catch {
-      // ignore
-    }
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch {
       // ignore
     }
-  }, [data, mounted]);
+  }, [data]);
 
   const update = (k: SectionKey, value: string) => {
     setData((prev) => ({ ...prev, [k]: value }));

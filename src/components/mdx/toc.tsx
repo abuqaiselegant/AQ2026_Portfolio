@@ -3,6 +3,7 @@
 import { useRef, useState, useMemo, useEffect } from "react";
 import { motion, useSpring } from "motion/react";
 import { cn } from "@/lib/utils";
+import { useIsMounted } from "@/hooks/use-is-mounted";
 
 interface TocEntry {
   items?: TocEntry[];
@@ -15,11 +16,7 @@ interface TocProps {
 }
 
 export function TableOfContents({ toc }: TocProps) {
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   const itemIds = useMemo(
     () =>
