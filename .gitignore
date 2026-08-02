@@ -47,3 +47,5 @@ next-env.d.ts
 
 .velite
 public/static/*
+# Single lockfile: bun.lock (Dockerfile uses bun install --frozen-lockfile)
+package-lock.json
