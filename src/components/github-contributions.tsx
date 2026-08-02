@@ -3,13 +3,40 @@ import { addDays } from "date-fns"
 import { cn } from "@/lib/utils"
 
 const API_BASE = "https://github-contributions-api.jogruber.de/v4"
+const REQUEST_TIMEOUT_MS = 8000
+
+/**
+ * Fetches the contribution graph from a third-party service. That service is
+ * outside our control, so every failure mode is contained here and reported as
+ * null: the homepage is prerendered at build time, and an uncaught throw here
+ * fails the whole build.
+ */
+async function fetchContributions(): Promise<ContributionDay[] | null> {
+  try {
+    const response = await fetch(`${API_BASE}/abuqaiselegant`, {
+      next: { revalidate: 3600 }, // Cache for 1 hour
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+
+    if (!response.ok) return null
+
+    const data = await response.json()
+    return Array.isArray(data?.contributions) ? data.contributions : null
+  } catch {
+    // Network error, timeout, or malformed JSON.
+    return null
+  }
+}
 
 export async function GithubContributions() {
-  const response = await fetch(`${API_BASE}/abuqaiselegant`, {
-    next: { revalidate: 3600 }, // Cache for 1 hour
-  })
-  const data = await response.json()
-  const contributions: ContributionDay[] = data.contributions
+  const contributions = await fetchContributions()
+
+  // Degrade to the skeleton rather than breaking the page. The next
+  // revalidation picks the data up once the service recovers.
+  if (!contributions) {
+    return <GitmapSkeleton className="mt-7 mb-8" />
+  }
+
   const today = new Date()
 
   return (
