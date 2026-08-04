@@ -1,3 +1,4 @@
+import { AsciiHeader } from "@/components/sections/ascii-header";
 import { Intro } from "@/components/sections/intro";
 import { About } from "@/components/sections/about";
 import { Projects } from "@/components/sections/projects";
@@ -10,6 +11,7 @@ import { BookACall } from "@/components/sections/book-a-call";
 export default function Home() {
   return (
     <>
+      <AsciiHeader />
       <Intro />
       <About />
       <BookACall />
